@@ -589,7 +589,7 @@
 const GOOGLE_SHEET_API_URL = "https://opensheet.elk.sh/1rApf9Zl0JWsZ5AfZ64D2xHHk0JB8PIrH5af86tnkNLQ";
 
 // Nama tab (worksheet) di Google Sheet. Ubah hanya jika nama tab Anda berbeda.
-const SHEET_TABS = { info: "info", jadwal: "jadwal", biaya: "biaya", program: "program", berkas: "berkas", foto: "foto", video: "video", teks: "teks", bidang: "bidang", blok: "blok" };
+const SHEET_TABS = { info: "info", jadwal: "jadwal", biaya: "biaya", program: "program", berkas: "berkas", foto: "foto", video: "video", teks: "teks", bidang: "bidang", blok: "blok", kelas: "kelas" };
 
 // Batas waktu menunggu Google Sheets (milidetik). Lewat dari ini -> pakai data bawaan.
 const FETCH_TIMEOUT_MS = 8000;
@@ -629,13 +629,29 @@ const FALLBACK_DATA = {
         { nama: "RA",    opsi: [ { label: "Halfday", jam: "08.00 - 12.30" }, { label: "Fullday", jam: "08.00 - 16.00" } ] }
       ],
       prestasi: [],
-      biaya: [
-        { label: "Formulir Pendaftaran", nilai: "Rp 200.000", catatan: "", sorot: false },
-        { label: "Uang Bangunan", nilai: "KOBER Rp 500.000 · RA Rp 1.000.000", catatan: "", sorot: false },
-        { label: "Aktivitas Indoor", nilai: "KOBER Rp 750.000 - 950.000 · RA Rp 1.200.000 - 1.400.000", catatan: "", sorot: false },
-        { label: "Seragam (4 stel)", nilai: "Putra Rp 700.000 · Putri Rp 900.000", catatan: "", sorot: false },
-        { label: "SPP per Bulan", nilai: "KOBER Rp 225.000 - 450.000 · RA Rp 275.000 - 475.000", catatan: "", sorot: true }
+      // KOBER dan RA punya rincian biaya & catatan biaya masing-masing.
+      // Diedit lewat tab "biaya" dan "info" di Google Sheet dengan jenjang = kober  atau  ra
+      paket: [
+        { kode: "kober", nama: "KOBER", catatan_biaya: "", catatan_opsi: {}, biaya: [
+          { label: "Formulir Pendaftaran", nilai: "Rp 200.000", catatan: "", sorot: false, opsi: "" },
+          { label: "Uang Bangunan", nilai: "Rp 500.000", catatan: "", sorot: false, opsi: "" },
+          { label: "Aktivitas Indoor", nilai: "Rp 750.000", catatan: "", sorot: false, opsi: "Halfday" },
+          { label: "Aktivitas Indoor", nilai: "Rp 950.000", catatan: "", sorot: false, opsi: "Fullday" },
+          { label: "Seragam (4 stel)", nilai: "Putra Rp 700.000 · Putri Rp 900.000", catatan: "", sorot: false, opsi: "" },
+          { label: "SPP per Bulan", nilai: "Rp 225.000", catatan: "", sorot: true, opsi: "Halfday" },
+          { label: "SPP per Bulan", nilai: "Rp 450.000", catatan: "", sorot: true, opsi: "Fullday" }
+        ] },
+        { kode: "ra", nama: "RA", catatan_biaya: "", catatan_opsi: {}, biaya: [
+          { label: "Formulir Pendaftaran", nilai: "Rp 200.000", catatan: "", sorot: false, opsi: "" },
+          { label: "Uang Bangunan", nilai: "Rp 1.000.000", catatan: "", sorot: false, opsi: "" },
+          { label: "Aktivitas Indoor", nilai: "Rp 1.200.000", catatan: "", sorot: false, opsi: "Halfday" },
+          { label: "Aktivitas Indoor", nilai: "Rp 1.400.000", catatan: "", sorot: false, opsi: "Fullday" },
+          { label: "Seragam (4 stel)", nilai: "Putra Rp 700.000 · Putri Rp 900.000", catatan: "", sorot: false, opsi: "" },
+          { label: "SPP per Bulan", nilai: "Rp 275.000", catatan: "", sorot: true, opsi: "Halfday" },
+          { label: "SPP per Bulan", nilai: "Rp 475.000", catatan: "", sorot: true, opsi: "Fullday" }
+        ] }
       ],
+      biaya: [],
       catatan_biaya: "",
       jadwal: [],
       berkas: [],
@@ -774,6 +790,20 @@ const FALLBACK_DATA = {
    mi      | 2      | Total Biaya Pendidikan Siswa Putra | Rp 8.300.000 | (keterangan kecil)     | ya
    * Contoh kolom lain yang Anda pikirkan (biaya_pendaftaran, total_biaya) cukup dibuat sebagai baris
      dengan label tersebut. sorot = ya  -> baris ditebalkan/di-highlight (untuk total & SPP).
+
+   KOBER & RA TERPISAH (biaya & catatan biaya):
+   - tab "biaya": jenjang = kober atau ra (bukan kober_ra). Kolom "opsi" = Halfday / Fullday; KOSONG = berlaku untuk keduanya.
+     Contoh: kober | Halfday | 4 | SPP per Bulan | Rp 225.000 | | ya     (tombol Halfday/Fullday muncul otomatis)
+   - tab "info":  baris jenjang = kober  atau  ra, isi kolom catatan_biaya (nomor WA/tagline tetap di baris kober_ra).
+     Tambah kolom "opsi" bila catatan berbeda untuk Halfday / Fullday; opsi kosong = catatan untuk keduanya.
+   - Format lama (jenjang = kober_ra di tab biaya) tetap jalan: tampil sebagai satu kartu biaya.
+   - CATATAN BIAYA semua jenjang (kober, ra, mi, mts, ma): kolom catatan_biaya di tab "info". Sel kosong = catatan disembunyikan.
+
+   TAB "kelas" (opsional) - pilihan kelas, satu baris satu opsi
+   jenjang  | kelas  | opsi    | jam
+   kober_ra | KOBER  | Halfday | 08.00 - 11.00
+   kober_ra | KOBER  | Fullday | 08.00 - 16.00
+   Jenjang yang punya baris di tab ini menggantikan pilihan kelas bawaannya. "WIB" ditambahkan otomatis setelah jam.
 
    TAB "video" (opsional) - video YouTube, ditampilkan terpisah dari galeri foto (rasio 16:9, pemutar YouTube asli)
    kategori | url_youtube                          | judul                      | urutan
@@ -938,6 +968,9 @@ function normKey(v) {
   var map = { koberra: "kober_ra", kober: "kober_ra", ra: "kober_ra", mi: "mi", mts: "mts", ma: "ma", umum: "umum" };
   return map[k] || "";
 }
+// Khusus KOBER dan RA: baris dengan jenjang = kober / ra dipakai untuk biaya & catatan biaya masing-masing.
+function opsiKey(v) { return String(v || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function subKey(v) { var k = String(v || "").toLowerCase().replace(/[^a-z0-9]/g, ""); return (k === "kober" || k === "ra") ? k : ""; }
 function pick(row, names) {
   for (var i = 0; i < names.length; i++) {
     if (row[names[i]] != null && String(row[names[i]]).trim() !== "") return String(row[names[i]]).trim();
@@ -950,6 +983,15 @@ function mergeSheetData(base, tabs) {
       program = tabs.program || [], berkas = tabs.berkas || [];
 
   info.forEach(function (r) {
+    var sub = subKey(r.jenjang);
+    if (sub) {   // baris khusus KOBER atau RA -> catatan biaya masing-masing (kosong = tanpa catatan)
+      var ok = opsiKey(pick(r, ["opsi", "paket"])), cv = String(r.catatan_biaya || "").trim();
+      (d.jenjang.kober_ra.paket || []).forEach(function (p) {
+        if (p.kode !== sub) return;
+        if (ok) { p.catatan_opsi = p.catatan_opsi || {}; p.catatan_opsi[ok] = cv; } else p.catatan_biaya = cv;   // opsi kosong = berlaku untuk Halfday & Fullday
+      });
+      return;
+    }
     var key = normKey(r.jenjang);
     if (key === "umum") { var w = pick(r, ["nomor_wa", "wa"]); if (w) d.config.wa_umum = w; return; }
     if (!key || !d.jenjang[key]) return;
@@ -957,7 +999,7 @@ function mergeSheetData(base, tabs) {
     if ((v = pick(r, ["nomor_wa", "wa"]))) j.wa = v;
     if ((v = pick(r, ["kontak_nama", "kontak"]))) j.kontak = v;
     if ((v = pick(r, ["tagline", "slogan"]))) j.tagline = v;
-    if ((v = pick(r, ["catatan_biaya"]))) j.catatan_biaya = v;
+    j.catatan_biaya = String(r.catatan_biaya || "").trim();   // Sheet = sumber kebenaran; sel kosong = tanpa catatan
     // promo & kuota: jika jenjang punya baris di tab info, Sheet adalah sumber kebenaran.
     // Sel kosong = tidak ada promo / tidak ada label kuota. (Opensheet membuang sel kosong di ujung
     // baris, jadi kolom yang "hilang" harus dianggap kosong, bukan "pakai data bawaan".)
@@ -977,19 +1019,22 @@ function mergeSheetData(base, tabs) {
   });
   Object.keys(jd).forEach(function (k) { d.jenjang[k].jadwal = jd[k]; });
 
-  var bd = {};
+  var bd = {}, bsub = {};
   biaya.forEach(function (r) {
-    var key = normKey(r.jenjang); if (!key || !d.jenjang[key]) return;
+    var sub = subKey(r.jenjang), key = sub ? "kober_ra" : normKey(r.jenjang);
+    if (!key || !d.jenjang[key]) return;
     var label = pick(r, ["label", "item"]); if (!label) return;
-    (bd[key] = bd[key] || []).push({
-      urutan: parseFloat(pick(r, ["urutan"])) || 999,
-      label: label, nilai: pick(r, ["nilai", "biaya"]),
-      catatan: pick(r, ["catatan"]), sorot: truthy(r.sorot)
-    });
+    var item = { urutan: parseFloat(pick(r, ["urutan"])) || 999, label: label, nilai: pick(r, ["nilai", "biaya"]),
+                 catatan: pick(r, ["catatan"]), sorot: truthy(r.sorot), opsi: pick(r, ["opsi", "paket"]) };
+    if (sub) (bsub[sub] = bsub[sub] || []).push(item); else (bd[key] = bd[key] || []).push(item);
   });
-  Object.keys(bd).forEach(function (k) {
-    d.jenjang[k].biaya = bd[k].sort(function (a, b) { return a.urutan - b.urutan; });
-  });
+  function byUrutan(a, b) { return a.urutan - b.urutan; }
+  Object.keys(bd).forEach(function (k) { d.jenjang[k].biaya = bd[k].sort(byUrutan); });
+  if (bsub.kober || bsub.ra) {
+    d.jenjang.kober_ra.paket.forEach(function (p) { if (bsub[p.kode]) p.biaya = bsub[p.kode].sort(byUrutan); });
+  } else if (bd.kober_ra) {
+    d.jenjang.kober_ra.paket = [];   // format lama (satu daftar "kober_ra"): tampil sebagai satu kartu
+  }
 
   function listInto(rows, field) {
     var g = {};
@@ -1002,6 +1047,21 @@ function mergeSheetData(base, tabs) {
   }
   listInto(program, "program");
   listInto(berkas, "berkas");
+
+  // Pilihan kelas (tab "kelas"): jenjang | kelas | opsi | jam
+  var kg = {};
+  (tabs.kelas || []).forEach(function (r) {
+    var key = normKey(r.jenjang), kn = pick(r, ["kelas", "nama_kelas"]), lb = pick(r, ["opsi", "label", "program"]);
+    if (!key || !d.jenjang[key] || !kn || !lb) return;
+    var g = kg[key] = kg[key] || { order: [], map: {} };
+    if (!g.map[kn]) { g.map[kn] = { nama: kn, opsi: [] }; g.order.push(kn); }
+    g.map[kn].opsi.push({ label: lb, jam: pick(r, ["jam", "waktu"]) });
+  });
+  Object.keys(kg).forEach(function (k) { d.jenjang[k].kelas = kg[k].order.map(function (n) { return kg[k].map[n]; }); });
+
+  // Format lama: catatan_biaya pada baris "kober_ra" berlaku untuk KOBER & RA yang belum punya catatan sendiri
+  var kr = d.jenjang.kober_ra;
+  if (kr.catatan_biaya && kr.paket) kr.paket.forEach(function (p) { if (!p.catatan_biaya) p.catatan_biaya = kr.catatan_biaya; });
   return d;
 }
 async function loadRemoteData() {
@@ -1214,6 +1274,19 @@ function renderSisoKatalog() {
       (p.ket ? '<figcaption class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 text-sm font-bold text-white">' + esc(p.ket) + '</figcaption>' : '') + '</figure>';
   }).join("");
 }
+/* Tombol Halfday / Fullday pada kartu Rincian Biaya */
+function setupOpsiToggle() {
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-opsi]"); if (!b) return;
+    var g = b.closest("[data-opsi-group]"); if (!g) return;
+    g.querySelectorAll("[data-opsi]").forEach(function (x) {
+      var on = x === b; x.setAttribute("aria-selected", String(on));
+      OPSI_ON.split(" ").forEach(function (c) { x.classList.toggle(c, on); });
+      OPSI_OFF.split(" ").forEach(function (c) { x.classList.toggle(c, !on); });
+    });
+    g.querySelectorAll("[data-opsi-pane]").forEach(function (p) { p.classList.toggle("hidden", p.dataset.opsiPane !== b.dataset.opsi); });
+  });
+}
 function setupLightbox() {
   var box = document.getElementById("lightbox"), img = document.getElementById("lbImg"), cap = document.getElementById("lbCap"),
       prev = document.getElementById("lbPrev"), next = document.getElementById("lbNext"), cur = { cat: "", i: 0 };
@@ -1287,6 +1360,7 @@ function section(titleHtml, iconName, bodyHtml) {
     '<div class="mt-4">' + bodyHtml + '</div></div>';
 }
 
+var OPSI_ON = "bg-emerald-700 border-emerald-700 text-white", OPSI_OFF = "bg-white border-slate-200 text-slate-600 hover:border-emerald-300";
 function renderPanel(key) {
   var j = DATA.jenjang[key];
   var h = "";
@@ -1343,7 +1417,7 @@ function renderPanel(key) {
           '<ul class="mt-2 space-y-2">' + k.opsi.map(function (o) {
             return '<li class="flex items-center justify-between gap-3 text-sm bg-slate-50 rounded-xl px-3 py-2">' +
               '<span class="font-semibold text-slate-700">' + esc(o.label) + '</span>' +
-              '<span class="text-slate-500 tabular-nums">' + esc(o.jam) + ' WIB</span></li>';
+              '<span class="text-slate-500 tabular-nums">' + (o.jam ? esc(o.jam) + ' WIB' : '') + '</span></li>';
           }).join("") + '</ul></div>';
       }).join("") + '</div>');
   }
@@ -1361,14 +1435,39 @@ function renderPanel(key) {
   // ---- Kolom kanan
   h += '<div class="lg:col-span-2 space-y-6">';
 
-  h += section("Rincian Biaya", "wallet",
-    '<ul class="space-y-2">' + j.biaya.map(function (b) {
-      return '<li class="rounded-xl px-4 py-3 ' + (b.sorot ? 'bg-emerald-700 text-white' : 'bg-slate-50 text-slate-700') + '">' +
-        '<p class="text-xs ' + (b.sorot ? 'text-emerald-100' : 'text-slate-500') + ' font-semibold">' + esc(b.label) + '</p>' +
-        '<p class="mt-0.5 font-extrabold ' + (b.sorot ? 'text-lg' : 'text-base') + ' leading-snug">' + esc(b.nilai) + '</p>' +
-        (b.catatan ? '<p class="mt-1 text-xs ' + (b.sorot ? 'text-emerald-100' : 'text-slate-500') + '">' + esc(b.catatan) + '</p>' : '') + '</li>';
-    }).join("") + '</ul>' +
-    (j.catatan_biaya ? '<p class="mt-3 text-xs leading-relaxed text-slate-500 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">' + esc(j.catatan_biaya) + '</p>' : ''));
+  // Satu kartu "Rincian Biaya" per kelas (KOBER dan RA terpisah). Bila baris biaya punya kolom opsi (Halfday / Fullday),
+  // tampil tombol pilihan; baris tanpa opsi berlaku untuk semua pilihan.
+  var paketList = (j.paket && j.paket.length) ? j.paket : [{ nama: "", biaya: j.biaya, catatan_biaya: j.catatan_biaya }];
+  function biayaList(items) {
+    return items && items.length
+      ? '<ul class="space-y-2">' + items.map(function (b) {
+          return '<li class="rounded-xl px-4 py-3 ' + (b.sorot ? 'bg-emerald-700 text-white' : 'bg-slate-50 text-slate-700') + '">' +
+            '<p class="text-xs ' + (b.sorot ? 'text-emerald-100' : 'text-slate-500') + ' font-semibold">' + esc(b.label) + '</p>' +
+            '<p class="mt-0.5 font-extrabold ' + (b.sorot ? 'text-lg' : 'text-base') + ' leading-snug">' + esc(b.nilai) + '</p>' +
+            (b.catatan ? '<p class="mt-1 text-xs ' + (b.sorot ? 'text-emerald-100' : 'text-slate-500') + '">' + esc(b.catatan) + '</p>' : '') + '</li>';
+        }).join("") + '</ul>'
+      : '<p class="text-sm text-slate-500">Informasi biaya dapat ditanyakan langsung kepada admin melalui WhatsApp.</p>';
+  }
+  paketList.forEach(function (pk) {
+    var items = pk.biaya || [], opsiList = [], seen = {};
+    items.forEach(function (b) { var k = opsiKey(b.opsi); if (k && !seen[k]) { seen[k] = 1; opsiList.push({ key: k, label: b.opsi }); } });
+    var panes = opsiList.length ? opsiList : [{ key: "", label: "" }];
+    var kls = (j.kelas || []).filter(function (k) { return String(k.nama).toLowerCase() === String(pk.nama).toLowerCase(); })[0];
+    var btns = opsiList.length > 1
+      ? '<div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Pilihan kelas ' + esc(pk.nama) + '">' + opsiList.map(function (o, i) {
+          return '<button type="button" role="tab" data-opsi="' + o.key + '" aria-selected="' + (i === 0) + '" class="px-4 py-2 rounded-xl border text-sm font-bold transition ' + (i === 0 ? OPSI_ON : OPSI_OFF) + '">' + esc(o.label) + '</button>';
+        }).join("") + '</div>' : '';
+    var body = panes.map(function (o, i) {
+      var list = items.filter(function (b) { var bk = opsiKey(b.opsi); return !o.key || !bk || bk === o.key; });
+      var note = (pk.catatan_opsi && pk.catatan_opsi[o.key]) || pk.catatan_biaya;
+      var oo = kls && o.key ? kls.opsi.filter(function (x) { return opsiKey(x.label) === o.key; })[0] : null;
+      return '<div data-opsi-pane="' + o.key + '"' + (i ? ' class="hidden"' : '') + '>' +
+        (oo && oo.jam ? '<p class="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500">' + icon("clock", "w-3.5 h-3.5") + 'Jam belajar ' + esc(o.label) + ': ' + esc(oo.jam) + ' WIB</p>' : '') +
+        biayaList(list) +
+        (note ? '<p class="mt-3 text-xs leading-relaxed text-slate-500 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">' + esc(note) + '</p>' : '') + '</div>';
+    }).join("");
+    h += section("Rincian Biaya" + (pk.nama ? " " + esc(pk.nama) : ""), "wallet", '<div data-opsi-group>' + btns + body + '</div>');
+  });
 
   h += section("Jadwal Pendaftaran", "calendar",
     (j.jadwal && j.jadwal.length
@@ -1499,6 +1598,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setupInteractions();
   setupDKU();
   setupLightbox();
+  setupOpsiToggle();
   renderAll();                         // 1) tampil langsung dari data bawaan (tanpa menunggu jaringan)
 
   loadRemoteData().then(function (ok) { // 2) lalu perbarui dari Google Sheets bila tersedia
