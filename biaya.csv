@@ -1,0 +1,24 @@
+jenjang,opsi,urutan,label,nilai,catatan,sorot
+kober,,1,Formulir Pendaftaran,Rp 200.000,,tidak
+kober,,2,Uang Bangunan,Rp 500.000,,tidak
+kober,Halfday,3,Aktivitas Indoor,Rp 750.000,,tidak
+kober,Fullday,3,Aktivitas Indoor,Rp 950.000,,tidak
+kober,,4,Seragam (4 stel),Putra Rp 700.000 · Putri Rp 900.000,,tidak
+kober,Halfday,5,SPP per Bulan,Rp 225.000,,ya
+kober,Fullday,5,SPP per Bulan,Rp 450.000,,ya
+ra,,1,Formulir Pendaftaran,Rp 200.000,,tidak
+ra,,2,Uang Bangunan,Rp 1.000.000,,tidak
+ra,Halfday,3,Aktivitas Indoor,Rp 1.200.000,,tidak
+ra,Fullday,3,Aktivitas Indoor,Rp 1.400.000,,tidak
+ra,,4,Seragam (4 stel),Putra Rp 700.000 · Putri Rp 900.000,,tidak
+ra,Halfday,5,SPP per Bulan,Rp 275.000,,ya
+ra,Fullday,5,SPP per Bulan,Rp 475.000,,ya
+mi,,1,Biaya Pendaftaran,Rp 350.000,,tidak
+mi,,2,Total Biaya Pendidikan Siswa Putra,Rp 8.300.000,,ya
+mi,,3,Total Biaya Pendidikan Siswa Putri,Rp 8.500.000,,ya
+mts,,1,Biaya Pendaftaran,Rp 350.000,,tidak
+mts,,2,Total Biaya Ikhwan,Rp 5.400.000,,ya
+mts,,3,Total Biaya Akhwat,Rp 5.600.000,,ya
+ma,,1,Biaya Pendaftaran,Rp 350.000,,tidak
+ma,,2,Total Biaya Siswa,Rp 5.400.000,,ya
+ma,,3,Total Biaya Siswi,Rp 5.600.000,,ya
